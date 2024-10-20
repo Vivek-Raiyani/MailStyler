@@ -51,6 +51,7 @@ def update_sheets(user_dic):
     df = conn.read(worksheet='User')
     df = pd.concat([df, new_user_df], ignore_index=True)
     conn.update(worksheet='User', data=df)
+    
 
 def send_mail(mail,latest_template):
     email_sender = st.secrets['mail']['e_mail']
