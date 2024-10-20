@@ -56,5 +56,6 @@ client_x509_cert_url = ""
 If you dont want to use Google sheets to store data just comment out **line 86** and you are good to go <br>
 Similary you can comment out **line no 76** if you don't want to send email preview
 <br>
+
 # To play with it Visit
 https://mailstyler.streamlit.app/
