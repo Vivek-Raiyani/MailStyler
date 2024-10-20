@@ -1,6 +1,15 @@
-import streamlit as st
-from utility import llm_call, is_valid_email,update_sheets,send_mail
 import datetime as date
+import pandas as pd
+import streamlit as st
+from utility import llm_call, is_valid_email
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from streamlit_gsheets import GSheetsConnection
+import tempfile
+import os
 
 st.title("MailStyler")
 
@@ -15,6 +24,7 @@ if "messages_history" not in st.session_state:
     st.session_state.messages_history = [
         {"role": "system", "content": "You are a Expert in generating HTML Email Template"},
     ]
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 # email section
 email, btn = st.columns(2, gap='large')
@@ -31,8 +41,14 @@ prompt, display = st.columns(2, gap="medium")
 with prompt:
     if is_valid_email(mail):
         if st.session_state.iteration > 0:
+            # Display prompt history
+            st.write("History")
+            for history in st.session_state.prompt_history:
+                st.write(history)
 
+            st.write("------------------------------------")
             prompt_input = st.text_area(label="Enter the style you want for your mail")
+
             if st.button("Submit"):
                 if prompt_input and prompt_input not in st.session_state.prompt_history:
                     # Append the prompt to prompt history
@@ -51,15 +67,8 @@ with prompt:
                     if st.session_state.iteration == 0:
                         st.rerun()  # Rerun the app if iteration limit is reached
 
-
         else:
             st.write("You have reached the maximum number of iterations.")
-
-        # Display prompt history
-        st.write("------------------------------------")
-        st.write("History")
-        for history in st.session_state.prompt_history:
-            st.write(history)
     else:
         st.error("Please enter a valid email address to use the site.")
 
@@ -70,20 +79,66 @@ with display:
             iteam = length - 1
             latest_template = st.session_state.template_history[iteam]
 
+            # Streamlit input fields
+            email_sender = st.secrets['mail']['e_mail']
+            email_receiver = mail
+            subject = 'Email template'
+            body = latest_template
+            password = st.secrets['password']['app_password']
+
             if mail_btn and st.session_state.iteration < 3:
                 try:
-                    # sending mail
-                    send_mail(mail,latest_template)
-                    
+                    # Create the MIMEMultipart object
+                    msg = MIMEMultipart()
+                    msg['From'] = email_sender
+                    msg['To'] = email_receiver
+                    msg['Subject'] = subject
+
+                    # Attach the HTML content to the message as HTML body
+                    msg.attach(MIMEText(body, 'html'))
+
+                    # Create temporary HTML file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmpfile:
+                        tmpfile.write(body.encode('utf-8'))
+                        temp_html_file_path = tmpfile.name
+
+                    # Attach the HTML file to the email
+                    with open(temp_html_file_path, 'rb') as attachment:
+                        part = MIMEBase('application', 'octet-stream')
+                        part.set_payload(attachment.read())
+                        encoders.encode_base64(part)
+                        part.add_header('Content-Disposition', f'attachment; filename="template.html"')
+                        msg.attach(part)
+
+                    # SMTP server setup and sending the email
+                    server = smtplib.SMTP('smtp.gmail.com', 587)
+                    server.starttls()  # Secure the connection
+                    server.login(email_sender, password)  # Login using provided credentials
+                    server.sendmail(email_sender, email_receiver, msg.as_string())  # Send the email
+                    server.quit()  # Terminate the SMTP session
+
+                    # Success message
+                    st.success('Email sent successfully with the HTML attachment!')
+
+                    # Clean up temporary HTML file
+                    os.remove(temp_html_file_path)
                     st.cache_data.clear()
                     # adding the email, timestamp, and HTML content to Google Sheets
+                    df = conn.read(worksheet='User')
+                    print('-----------------------------------')
+                    print(df)
+                    timestamp = date.datetime.now()
                     new_user = {
                         'Email': mail, 
-                        'Timestamp': date.datetime.now(), 
-                        'Html': latest_template,  # Store the HTML template content
-                        'Promot': prompt_input
+                        'Timestamp': timestamp, 
+                        'Html': latest_template  # Store the HTML template content
                     }
-                    update_sheets(new_user)
+                    new_user_df = pd.DataFrame([new_user])
+                    print('-------------------------------------')
+                    # Append new user to the existing DataFrame
+                    df = pd.concat([df, new_user_df], ignore_index=True)
+                    print(df)
+                    conn.update(worksheet='User', data=df)
 
                 except Exception as e:
                     st.error(f"Error sending email: {e}")

@@ -2,3 +2,8 @@ streamlit
 requests
 jinja2
 openai
+pandas
+smtplib
+re
+streamlit_gsheets
+tempfile
