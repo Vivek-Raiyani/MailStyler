@@ -69,6 +69,7 @@ with display:
         if length:
             iteam = length - 1
             latest_template = st.session_state.template_history[iteam]
+            prompt_template = st.session_state.prompt_history[iteam]
 
             if mail_btn and st.session_state.iteration < 3:
                 try:
@@ -81,7 +82,7 @@ with display:
                         'Email': mail, 
                         'Timestamp': date.datetime.now(), 
                         'Html': latest_template,  # Store the HTML template content
-                        'Promot': prompt_input
+                        'Promot': prompt_template
                     }
                     update_sheets(new_user)
 
