@@ -1,18 +1,23 @@
-# 🎈 Blank app template
+# Project Name
+A short tagline describing the project.
 
-A simple Streamlit app template for you to modify!
+## Description
+This project aims to solve [specific problem] by providing [solution or functionality].
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
-
-### How to run it on your own machine
-
-1. Install the requirements
-
+## Installation
+1. Clone the repository:
+```
+   git clone https://github.com/username/repo.git
+```
+2. Navigate to the project directory:
+```
+   cd MailStyler
+```
+3. Install dependencies:
    ```
    $ pip install -r requirements.txt
    ```
-
-2. Run the app
+4. Run the app
 
    ```
    $ streamlit run streamlit_app.py
