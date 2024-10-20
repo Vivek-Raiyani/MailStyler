@@ -1,9 +1,5 @@
-streamlit
+streamlit==1.39.0
 requests
 jinja2
 openai
 pandas
-smtplib
-re
-streamlit_gsheets
-tempfile
