@@ -3,4 +3,4 @@ requests
 jinja2
 openai
 pandas
-streamlit_gsheets
+st-gsheets-connection
